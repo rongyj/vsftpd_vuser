@@ -34,10 +34,15 @@ then
   VUFLAG=1
 fi
 #
-if [ -d $VUSER_HOME/$1 ]
+if [ -d $VUSER_HOME ]
 then
-  echo "Folder $VUSER_HOME/$1 exists"
-  VUFLAG=1
+  find_user=`find $VUSER_HOME -name $1`
+  if [ -n $find_user ]; then
+	user_home=`echo $find_user | cut -d ' ' -f1`
+	export VUSER_HOME=`echo ${user_home/%\/"$1"/}`
+  	echo "Folder $VUSER_HOME/$1 exists"
+  	VUFLAG=1
+  fi
 fi
 #
 if [ $VUFLAG -eq 1 ]
