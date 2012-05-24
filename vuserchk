@@ -1,0 +1,76 @@
+#!/bin/bash
+# Script to check if the VSFTPD Virtual users active and deleted lists data integrity 
+# Author Bellamkonda Sudhakar
+# Version 0.2
+#
+#config file /etc/vsftpd/vuser/vuser.conf
+#
+echo; echo
+if [ -f /etc/vsftpd/vuser/vuser.conf ] 
+then
+. /etc/vsftpd/vuser/vuser.conf
+else
+echo "No Config file at /etc/vsftpd/vuser/vuser.conf, error"
+echo "Exiting"; echo
+exit 1
+fi
+#
+if [ $UID != "0" ]
+then
+echo "Not root, Exiting"
+echo
+exit 1
+fi
+#
+echo -n "Vuser Config folder $CONFIG_ROOT "
+if [ -d $CONFIG_ROOT ] ; then echo "OK"; else echo "Non Existant"; fi
+#
+echo -n "File $VUSER_LIST "
+if [ -s $CONFIG_ROOT/$VUSER_LIST ] ; then echo "OK"; else echo "Non Existant"; fi
+#
+echo -n "File $VUSER_DEL "
+if [ -s $CONFIG_ROOT/$VUSER_DEL ] ; then echo "OK"; else echo "Non Existant"; fi
+#
+echo -n "FTP ROOT Folder $VUSER_HOME "
+if [ -d $VUSER_HOME ] ; then echo "OK"; else echo "Non Existant"; fi
+#
+echo -n "File $VUSER_DB.db "
+if [ -s $CONFIG_ROOT/$VUSER_DB.db ] ; then echo "OK"; else echo "Non Existant"; fi
+#
+echo
+echo "The number of records should be even as each credential record is a pair of two lines"
+echo "First the username and then the password" 
+echo
+#
+VTOTREC=`wc -l $CONFIG_ROOT/$VUSER_LIST | cut -c 1-2`
+echo "Total records in $CONFIG_ROOT/$VUSER_LIST is $VTOTREC"
+if [ `expr $VTOTREC % 2` != 0 ] ; then echo "ODD number of records in $VUSER_LIST - Error"; fi
+#
+DTOTREC=`wc -l $CONFIG_ROOT/$VUSER_DEL | cut -c 1-2`
+echo "Total records in $CONFIG_ROOT/$VUSER_DEL is $DTOTREC"
+if [ `expr $DTOTREC % 2` != 0 ] ; then echo "ODD number of records in $VUSER_DEL - Error"; fi
+#
+STOTREC=`wc -l $CONFIG_ROOT/$LUSER_SNC | cut -c 1-2`
+echo "Total Synced Local Users from file $CONFIG_ROOT/$LUSER_SNC is $STOTREC"
+#
+LTOTREC=`ls $LUSER_HOME | wc -w`
+echo "Total Local users under $LUSER_HOME is $LTOTREC"
+#
+VFLDTOT=`ls $VUSER_HOME | wc -w`
+echo "Total folders under $VUSER_HOME is $VFLDTOT"
+#
+FTPUTOT=`expr $STOTREC + $VTOTREC / 2`
+echo
+echo "Synced Local Users    : $STOTREC"
+echo "Active Virtual Users  : `expr $VTOTREC / 2`"
+echo "Deleted Virtual Users : `expr $DTOTREC / 2`"
+echo "Total FTP Users       : $FTPUTOT"
+echo
+#
+TV=`expr $FTPUTOT + $DTOTREC / 2`
+if [ $VFLDTOT != $TV ] 
+then
+  echo "Mismatch Error! Actual folders under FTP Root to Total FTP Users + Deleted Users" 
+  echo "Total folders under $VUSER_HOME is $VFLDTOT != $TV Total FTP Users"
+fi
+echo; echo

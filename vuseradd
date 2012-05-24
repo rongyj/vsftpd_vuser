@@ -1,0 +1,79 @@
+#!/bin/bash
+# Script to add Virtual users to the VSFTPD server
+# Author Bellamkonda Sudhakar
+# Version 0.2
+#
+#config file /etc/vsftpd/vuser/vuser.conf
+#
+. /etc/vsftpd/vuser/vuser.conf
+VUFLAG=0
+VUSER=$1
+VUSER_BAK=$VUSER_ADD_BAK.`date +%d%m%Y`
+#VUSER_BAK=$VUSER_ADD_BAK.`date +%d%m%Y-%H%m%S`
+#
+echo; echo
+#
+if [ $UID != "0" ]
+then
+echo "Not root, Exiting"
+exit 1
+fi
+#
+if [ -z "$1" ]
+then
+echo "Usage: $0 <username>"
+exit 1
+fi
+#
+if [ -n "`grep $VUSER $CONFIG_ROOT/$VUSER_LIST`" ]
+then
+  echo "User $VUSER exists"
+  VUFLAG=1
+fi
+#
+if [ -d $LUSER_HOME/$VUSER ]
+then
+  echo "Local User $VUSER exists at $LUSER_HOME/$VUSER"
+  VUFLAG=1
+fi
+#
+if [ -n "`grep $VUSER $CONFIG_ROOT/$VUSER_DEL`" ]
+then
+  echo "User $VUSER exists in deleted list $VUSER_DEL"
+  echo "Please Restore user instead of creating a one"
+  VUFLAG=1
+fi
+if [ -d $VUSER_HOME/$VUSER ]
+then
+  echo "Folder $VUSER_HOME/$VUSER exists"
+  VUFLAG=1
+fi
+#
+if [ -d $VUSER_HOME/$VUSER-deleted ]
+then
+  echo "Folder $VUSER_HOME/$VUSER-deleted exists"
+  echo "Please Restore user instead of creating a one"
+  VUFLAG=1
+fi
+#
+if [ $VUFLAG = 1 ]
+then 
+   echo "Exiting"
+   echo
+   exit 1
+else
+   PASSWORD=`tr -dc A-Za-z0-9_ < /dev/urandom | head -c 8`
+   echo "Virtual Username   : " $VUSER
+   echo "Generated Password : " $PASSWORD
+   echo "Backing up current vuser_list to $VUSER_BAK"
+   cp $CONFIG_ROOT/$VUSER_LIST $CONFIG_ROOT/$VUSER_BAK
+   echo $VUSER >> $CONFIG_ROOT/$VUSER_LIST
+   echo $PASSWORD >> $CONFIG_ROOT/$VUSER_LIST
+   echo "Making Home folder for user $VUSER at $VUSER_HOME"
+   mkdir $VUSER_HOME/$VUSER
+   chown -R ftp:ftp $VUSER_HOME/$VUSER
+   echo "Generating $CONFIG_ROOT/$VUSER_DB.db from $VUSER_LIST"
+   db_load -T -t hash -f $CONFIG_ROOT/$VUSER_LIST $CONFIG_ROOT/$VUSER_DB.db
+   echo "Done."
+fi
+

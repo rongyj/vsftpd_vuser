@@ -1,0 +1,57 @@
+#!/bin/bash
+# Script toange password of Virtual user of the VSFTPD server
+# Author Bellamkonda Sudhakar
+# Version 0.2
+#
+#config file /etc/vsftpd/vuser/vuser.conf
+#
+. /etc/vsftpd/vuser/vuser.conf
+VUFLAG=0
+VUSER=$1
+VUSER_BAK=$VUSER_ADD_BAK.`date +%d%m%Y`
+#VUSER_BAK=$VUSER_ADD_BAK.`date +%d%m%Y-%H%m%S`
+#
+echo; echo
+#
+if [ $UID != "0" ]
+then
+echo "Not root, Exiting"
+echo
+exit 1
+fi
+#
+if [ -z "$1" ]
+then
+echo "Usage: $0 <username>"
+echo
+exit 1
+fi
+#
+if [ -n "`grep $VUSER $CONFIG_ROOT/$VUSER_LIST`" ]
+then
+  echo "User $VUSER exists"
+else
+  VUFLAG=1
+  echo "User $VUSER does not exist"
+fi
+#
+#
+if [ $VUFLAG == 0 ]
+then 
+   PASSWORD=`tr -dc A-Za-z0-9_ < /dev/urandom | head -c 8`
+   echo "Backing up current vuser_list to $VUSER_BAK"
+   cp $CONFIG_ROOT/$VUSER_LIST $CONFIG_ROOT/$VUSER_BAK
+   CPASSWORD=`awk '/'$VUSER'/ { getline; print } ' $CONFIG_ROOT/$VUSER_LIST`
+   echo "Virtual Username   : " $VUSER
+   echo "Current   Password : " $CPASSWORD
+   echo "Generated Password : " $PASSWORD
+   echo "Changing Password..."
+   sed -i 's/'$CPASSWORD'/'$PASSWORD'/' $CONFIG_ROOT/$VUSER_LIST > /dev/null
+   echo "Generating $CONFIG_ROOT/$VUSER_DB.db from $VUSER_LIST"
+   db_load -T -t hash -f $CONFIG_ROOT/$VUSER_LIST $CONFIG_ROOT/$VUSER_DB.db
+   echo "Done."
+else
+   echo "Exiting"
+   exit 1
+fi
+echo; echo

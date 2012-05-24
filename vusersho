@@ -1,0 +1,47 @@
+#!/bin/bash
+# Script to display user password of Virtual user of the VSFTPD server
+# Author Bellamkonda Sudhakar
+# Version 0.2
+#
+#config file /etc/vsftpd/vuser/vuser.conf
+#
+. /etc/vsftpd/vuser/vuser.conf
+VUFLAG=0
+VUSER=$1
+#
+echo; echo
+#
+if [ $UID != "0" ]
+then
+echo "Not root, Exiting"
+echo
+exit 1
+fi
+#
+if [ -z "$1" ]
+then
+echo "Usage: $0 <username>"
+echo
+exit 1
+fi
+#
+if [ -n "`grep $VUSER $CONFIG_ROOT/$VUSER_LIST`" ]
+then
+  echo "User $VUSER exists"
+else
+  VUFLAG=1
+  echo "User $VUSER does not exist"
+fi
+#
+#
+if [ $VUFLAG == 0 ]
+then 
+   CPASSWORD=`awk '/'$VUSER'/ { getline; print } ' $CONFIG_ROOT/$VUSER_LIST`
+   echo "Virtual Username   : " $VUSER
+   echo "Current   Password : " $CPASSWORD
+   echo "Done."
+else
+   echo "Exiting"
+   exit 1
+fi
+echo; echo

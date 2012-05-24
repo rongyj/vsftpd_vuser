@@ -1,0 +1,60 @@
+#!/bin/bash
+# Script to sync local users of the system i.e. /home shell users to the VSFTPD ftp home path
+# Author Bellamkonda Sudhakar
+# Version 0.2
+#
+#config file /etc/vsftpd/vuser/vuser.conf
+#
+. /etc/vsftpd/vuser/vuser.conf
+echo; echo
+VUFLAG=0
+VUSER=$1
+LUSER_BAK=$LUSER_SNC_BAK.`date +%d%m%Y`
+#LUSER_BAK=$LUSER_SNC_BAK.`date +%d%m%Y-%H%m%S`
+#
+if [ $UID != "0" ]
+then
+echo "Not root, Exiting"
+echo
+exit 1
+fi
+#
+if [ -z "$1" ]
+then
+echo "Usage: $0 <username>"
+echo
+exit 1
+fi
+#
+echo "Using local shell user home path $LUSER_HOME " 
+echo "If different please change the value of LUSER_HOME in vuser.conf file"
+echo -n "Local user home folder $LUSER_HOME/$VUSER "
+if [ -d $LUSER_HOME/$VUSER ] ; then echo "Exists - OK"; else VUFLAG=1; echo "Non Existant - Cannot Sync"; fi
+#
+echo -n "Symtem link in $LUSER_HOME/$VUSER/ftphome to $VUSER_HOME/$VUSER "
+if [ -d $LUSER_HOME/$VUSER/ftphome ] ; then VUFLAG=1; echo "Exists - Cannot Sync"; else echo "Non Existant - OK"; fi
+#
+echo -n "Checking $VUSER_HOME/$VUSER "
+if [ -d $VUSER_HOME/$VUSER ]
+then
+  VUFLAG=1
+  echo "OK - Cannot Sync"
+  echo "Check if a Virtual user with the same name exists with vusersho <username>"
+else
+   echo "Non Existant - OK"
+fi
+#
+if [ $VUFLAG = 0 ]
+then
+  mkdir $VUSER_HOME/$VUSER > /dev/null
+  chown ftp:ftp $VUSER_HOME/$VUSER
+  ln -s $VUSER_HOME/$VUSER $LUSER_HOME/$VUSER/ftphome > /dev/null
+  cp $CONFIG_ROOT/$LUSER_SNC $CONFIG_ROOT/$LUSER_BAK
+  echo $VUSER >> $CONFIG_ROOT/$LUSER_SNC
+  echo "Local user folder and system link created"
+  echo "Done."
+else
+  echo "Exiting"
+  echo
+fi
+echo; echo

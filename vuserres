@@ -1,0 +1,100 @@
+#!/bin/bash
+# Script to restore deleted Virtual users to the VSFTPD server
+# Author Bellamkonda Sudhakar
+# Version 0.2
+#
+#config file /etc/vsftpd/vuser/vuser.conf
+#
+. /etc/vsftpd/vuser/vuser.conf
+VUFLAG=0
+VUSER=$1
+VDELFILE=$CONFIG_ROOT/$VUSER_DEL
+VUSER_BAK=$VUSER_ADD_BAK.`date +%d%m%Y`
+#VUSER_BAK=$VUSER_ADD_BAK.`date +%d%m%Y-%H%m%S`
+#
+echo; echo
+#
+if [ $UID != "0" ]
+then
+echo "Not root, Exiting"
+echo
+exit 1
+fi
+#
+if [ -z "$1" ]
+then
+echo "Usage: $0 <username>"
+echo
+exit 1
+fi
+#
+if [ -n "`grep $VUSER $CONFIG_ROOT/$VUSER_DEL`" ]
+then
+  echo "User $VUSER exists in deleted list $VUSER_DEL, checking home folders.."
+else
+  echo "User $VUSER not in deleted list $VUSER_DEL"
+  VUFLAG=1
+fi
+#
+if [ -d $VUSER_HOME/$VUSER-deleted ]
+then
+  echo "Folder $VUSER_HOME/$VUSER-deleted exists"
+  echo "Checking if user exists in active users list..."
+else
+  echo "Folder $VUSER_HOME/$VUSER-deleted does not exist"
+  VUFLAG=1
+fi
+#
+if [ -d $VUSER_HOME/$VUSER ]
+then
+  echo "User $VUSER exists in active user list $VUSER_LIST"
+  echo "Cannot proceed"
+  VUFLAG=1
+fi
+#
+if [ -n "`grep $VUSER $CONFIG_ROOT/$VUSER_LIST`" ]
+then
+  echo "Folder $VUSER_HOME/$VUSER exists"
+  echo "Cannot proceed as a folder is not marked for deletion"
+  VUFLAG=1
+fi
+#
+if [ `grep -c $VUSER $CONFIG_ROOT/$VUSER_DEL` -gt 1 ]
+then
+echo "$VUSER occures `grep -c $VUSER $CONFIG_ROOT/$VUSER_DEL` times in user file"
+echo "User duplication not permitted in Active or deleted lists, correct this"
+VUFLAG=1
+fi
+#
+if [ $VUFLAG -eq 0 ]
+then 
+#
+gawk -v VUSER=${VUSER} -v VTMP=${VTMP} 'BEGIN { print "Extracting Password for user "VUSER" from user text file..." }
+   $1 ~ VUSER { print $0 > VTMP
+              getline
+              print "Restored Password: " $0   
+              print $0 >> VTMP }
+   END { print "User and Password pairs added to "VTMP }' $CONFIG_ROOT/$VUSER_DEL
+#
+echo "Backing up current vuser_list to $VUSER_BAK"
+cp $CONFIG_ROOT/$VUSER_LIST $CONFIG_ROOT/$VUSER_BAK
+#
+echo "Restoring user to $VUSER_LIST File"
+for t in `gawk '{ print $1 }' $VTMP`
+do
+#     echo $t
+     echo $t >> $CONFIG_ROOT/$VUSER_LIST
+     sed -i '/'$t'/d' $CONFIG_ROOT/$VUSER_DEL > /dev/null
+done
+echo "$VUSER removed from $VUSER_DEL"
+echo "Generating DB..."
+db_load -T -t hash -f $CONFIG_ROOT/$VUSER_LIST $CONFIG_ROOT/$VUSER_DB.db
+echo "Renaming Home folder to $VUSER-deleted for user $VUSER at $VUSER_HOME"
+mv $VUSER_HOME/$VUSER-deleted $VUSER_HOME/$VUSER
+echo "Cleaning Up..."
+rm -f $VTMP
+echo "Done."
+else
+  echo "Exiting"
+fi
+echo; echo
