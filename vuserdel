@@ -14,7 +14,7 @@ VDELFILE=$CONFIG_ROOT/$VUSER_DEL
 #
 echo; echo
 #
-if [ $UID != "0" ]
+if [ $UID != "0" ] && [ $UID != "610" ]
 then
 echo "Not root, Exiting"
 echo
@@ -34,15 +34,18 @@ then
   VUFLAG=1
 fi
 #
-if [ -d $VUSER_HOME ]
+if [ -d $VUSER_HOME/$1 ]
 then
-  find_user=`find $VUSER_HOME -name $1`
-  if [ -n $find_user ]; then
-	user_home=`echo $find_user | cut -d ' ' -f1`
-	export VUSER_HOME=`echo ${user_home/%\/"$1"/}`
-  	echo "Folder $VUSER_HOME/$1 exists"
+	echo "Folder $VUSER_HOME/$1 exists"
   	VUFLAG=1
-  fi
+else
+	find_user=`find $VUSER_HOME -name $1`
+	if [ -n $find_user ]; then
+		user_home=`echo $find_user | cut -d ' ' -f1` 
+		export VUSER_HOME=`echo ${user_home/%\/"$1"/}`
+	  	echo "Folder $VUSER_HOME/$1 exists"
+	  	VUFLAG=1
+	 fi  
 fi
 #
 if [ $VUFLAG -eq 1 ]
