@@ -71,6 +71,7 @@ echo "User deleted from list file, generating DB..."
 db_load -T -t hash -f $CONFIG_ROOT/$VUSER_LIST $CONFIG_ROOT/$VUSER_DB.db
 echo "Renaming Home folder to $VUSER-deleted for user $VUSER at $VUSER_HOME"
 mv $VUSER_HOME/$VUSER $VUSER_HOME/$VUSER-deleted
+mv $CONFIG_ROOT/$VUSER $CONFIG_ROOT/$VUSER-deleted
 echo "Cleaning Up..."
 rm -f $VTMP
 echo "Done."

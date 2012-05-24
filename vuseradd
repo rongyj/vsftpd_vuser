@@ -78,6 +78,7 @@ else
    chown -R ftp:ftp $VUSER_HOME/$VUSER
    echo "Generating $CONFIG_ROOT/$VUSER_DB.db from $VUSER_LIST"
    db_load -T -t hash -f $CONFIG_ROOT/$VUSER_LIST $CONFIG_ROOT/$VUSER_DB.db
+   echo "local_root=$VUSER_HOME/$VUSER" >> $CONFIG_ROOT/$VUSER
    echo "Done."
 fi
 
