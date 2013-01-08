@@ -10,8 +10,9 @@ VUFLAG=0
 VUSER=$1
 #
 echo; echo
-#
-if [ $UID != "0" ] && [ $UID != "610" ]
+#  
+poc_uid=`id -u poc`
+if [ $UID != "0" ] && [ $UID != "$poc_uid" ]
 then
 echo "Not root, Exiting"
 echo

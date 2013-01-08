@@ -13,8 +13,9 @@ VUSER_BAK=$VUSER_DEL_BAK.`date +%d%m%Y`
 VDELFILE=$CONFIG_ROOT/$VUSER_DEL
 #
 echo; echo
-#
-if [ $UID != "0" ] && [ $UID != "610" ]
+# 
+poc_uid=`id -u poc`
+if [ $UID != "0" ] && [ $UID != "$poc_uid" ]
 then
 echo "Not root, Exiting"
 echo

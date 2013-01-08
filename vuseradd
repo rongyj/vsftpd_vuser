@@ -12,12 +12,8 @@ VUSER_BAK=$VUSER_ADD_BAK.`date +%d%m%Y`
 #VUSER_BAK=$VUSER_ADD_BAK.`date +%d%m%Y-%H%m%S`
 #
 echo; echo
-#
-if [ $UID != "0" ] && [ $UID != "610" ]
-then
-echo "Not root, Exiting"
-exit 1
-fi
+# 
+
 #
 if [ -z "$1" ]
 then
@@ -25,8 +21,24 @@ echo "Usage: $0 <username> [<env name: devf|merqa|poa|poc]"
 exit 1
 fi
 
-if [ -n "$2" ]; then
-	export VUSER_HOME=$VUSER_HOME/$2/dropbox
+if [ -n "$2" ]; then   
+	admin_uid=`id -u $2`
+	if [ $UID != "0" ] && [ $UID != "$admin_uid" ]
+	then
+		echo "Error:You are not login as root or the admin user $2, Exit!"
+		exit 1
+	fi
+	if [ "$2" == "poc" ]
+		export VUSER_HOME=$VUSER_HOME/$2/dropbox
+	else
+		export VUSER_HOME=$VUSER_HOME/$2
+	fi
+else
+	if [ $UID != "0" ]
+	then
+		echo "Error:You are not login as root, Exit!"
+		exit 1
+	fi
 fi
 #
 if [ -n "`grep $VUSER $CONFIG_ROOT/$VUSER_LIST`" ]

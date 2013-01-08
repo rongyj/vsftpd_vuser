@@ -13,8 +13,9 @@ VUSER_BAK=$VUSER_ADD_BAK.`date +%d%m%Y`
 #VUSER_BAK=$VUSER_ADD_BAK.`date +%d%m%Y-%H%m%S`
 #
 echo; echo
-#
-if [ $UID != "0" ] && [ $UID != "610" ]
+# 
+poc_uid=`id -u poc`
+if [ $UID != "0" ] && [ $UID != "$poc_uid" ]
 then
 echo "Not root, Exiting"
 echo
